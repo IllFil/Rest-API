@@ -5,6 +5,7 @@ from profiles_api import serializers
 from profiles_api import models
 from rest_framework.authentication import TokenAuthentication
 from profiles_api import permissions
+from rest_framework import filters
 class HelloApiView(APIView):
     """Test API View"""
     serializer_class = serializers.HelloSerializer
@@ -106,6 +107,15 @@ class HelloViewSet(viewsets.ViewSet):
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     """Handle creating, creating and updating profiles"""
-    ...
+    """Allow users to edit their own profile"""
+
+    def has_object_permission(self, request, view, obj):
+        """Check user is trying to edit their own profile"""
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        return obj.id == request.user.id
     authentication_classes = (TokenAuthentication,)
     permission_classes = (permissions.UpdateOwnProfile,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name', 'email',)
